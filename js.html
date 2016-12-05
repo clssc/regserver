@@ -1,0 +1,80 @@
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+
+<script>
+  $(function() {
+    $('#progress').dialog({
+      autoOpen: false,
+      resizable: false,
+      modal: true,
+    });
+    $('#completed').dialog({
+      autoOpen: false,
+      resizable: false,
+      modal: true,
+      buttons: {
+        'OK': function() { $(this).dialog('close'); }
+      }
+    });
+    $('#error').dialog({
+      autoOpen: false,
+      resizable: false,
+      modal: true,
+      buttons: {
+        'OK': function() { $(this).dialog('close'); }
+      }
+    });
+        
+    function commonStart() {
+      $('#completed').dialog('close');
+      $('#error').dialog('close');
+      $('#progress').dialog('open');
+    }
+        
+    $('#fullRoster').click(function() {
+      commonStart();
+      google.script.run.withSuccessHandler(defaultHandler).genFullRoster();
+    });
+        
+    $('#publicRoster').click(function() {
+      commonStart();
+      google.script.run.withSuccessHandler(defaultHandler).genPublicRosters();
+    });
+        
+    $('#classRoster').click(function() {
+      commonStart();
+      google.script.run.withSuccessHandler(defaultHandler).genClassRosters();
+    });
+        
+    $('#mailClassRoster').click(function() {
+      commonStart();
+      google.script.run.withSuccessHandler(defaultHandler).mailClassRosters();
+    });
+        
+    $('#blankRegForm').click(function() {
+      commonStart();
+      google.script.run.withSuccessHandler(defaultHandler).genBlankRegForm();
+    });
+        
+    $('#singleRegForm').click(function() {
+      commonStart();
+      google.script.run.withSuccessHandler(defaultHandler).genRegForm($('#formIdentity').val());
+    });
+        
+    $('#allRegForm').click(function() {
+      commonStart();
+      google.script.run.withSuccessHandler(defaultHandler).genRegFormsByClass($('#classIdentity').val());
+    });
+        
+    function defaultHandler(link) {
+      $('#progress').dialog('close');
+      if (link.substring(0, 4) != 'http') {
+        $('#errContext').text(link);
+        $('#error').dialog('open');
+      } else {
+        $('a#reportLink').attr('href', link ? link : 'https://drive.google.com/a/westsidechineseschool.org/#folders/0BwvYC6nj697MZGNHY25qVEdlMHM');
+        $('#completed').dialog('open');
+      }
+    }
+  });
+</script>

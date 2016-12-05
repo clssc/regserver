@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<?!= HtmlService.createHtmlOutputFromFile('css').getContent(); ?>
+
+</head>
+<body>
+
+<h2>Rosters</h2>
+
+<h3>Full Roster</h3>
+<p>Full class roster for Academic VP that contains key information for all students.</p>
+<form>
+  <input type="button" id="fullRoster" value="Generate Full Roster" />
+</form>
+
+<h3>Public Roster</h3>
+<p>Public rosters are used during the beginning of school year. They contain information regarding which student is assigned to
+what class, and where that class is.</p>
+<form>
+  <input type="button" id="publicRoster" value="Generate Public Roster" />
+</form>
+
+<h3>Class Roster</h3>
+<p>Generate class roster. Class roster contains contacts information for all students in a class. This can take
+<strong>VERY LONG</strong>.</p>
+<form>
+  <input type="button" id="classRoster" value="Generate Class Roster" />
+</form>
+<!--
+<p>The system is able to send out the class rosters in PDF form to the teachers. Each teacher will only get the contacts of
+their class. Sorry, no TA&#39;s. The system has a limit of 500 e-mails per day so use this button with caution.</p>
+<form>
+  <input type="button" id="mailClassRoster" value="Mail Class Roster" />
+</form>
+-->
+<h2>Registration Form</h2>
+
+<h3>Blank Reg Form</h3>
+<p>Generate blank registration form for hand writing.</p>
+<form>
+  <input type="button" id="blankRegForm" value="Generate Blank Form" />
+</form>
+
+<h3>Regenerate Single Reg Form</h3>
+<p>Regenerate registration form for a single family, please input full name or family number below:</p>
+<form>
+  <input type="text" id="formIdentity" />
+  <input type="button" id="singleRegForm" value="Generate Reg Form" />
+</form>
+
+<h3>Generate Reg Forms for a Class</h3>
+<p>Generate registration forms of students of a class (in past year). Please input class name below:</p>
+<form>
+  <input type="text" id="classIdentity" />
+  <input type="button" id="allRegForm" value="Generate Reg Forms for Class" />
+</form>
+
+<div id="progress" title="Generating Report ...">
+  <p>Server is generating reports, please wait patiently.</p>
+</div>
+
+<div id="completed" title="Report Generated">
+  <p>Report generated: 
+  <a id="reportLink" target="_blank">click here to see</a></p>
+</div>
+
+<div id="error" title="Error">
+  <p>Report generation error:</p>
+  <p id="errContext"></p>
+</div>
+
+<?!= HtmlService.createHtmlOutputFromFile('js').getContent(); ?>
+
+</body>
+</html>
