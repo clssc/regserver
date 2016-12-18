@@ -8,13 +8,13 @@
  * TuitionBreakdown2016
  * @const {string}
  */
-var TUITION_BREAKDOWN_DOCID = '1o_Bluuj8KaOYQR6uQBBr84vm6p3Mj97JM07xTP7ga0g';
+var TUITION_BREAKDOWN_DOCID = '1d3Q1VR9aO-ItFSUBvI6a9INdEkkt0FJMMPldDlNeDHg';
 
 
 /**
- * Cut off date. 2016-08-01. This is GMT, so PST daylight time is 7 hours later.
+ * Cut off date. 2017-08-01. This is GMT, so PST daylight time is 7 hours later.
  */
-var CUT_OFF_DATE = new Date(Date.UTC(2016, 7, 1, 7)).getTime();
+var CUT_OFF_DATE = new Date(Date.UTC(2017, 7, 1, 7)).getTime();
 
 
 /**

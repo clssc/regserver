@@ -23,7 +23,7 @@ var PADDINGS = '                                                            ';
  * @return {number}
  */
 function getSchoolYear() {
-  return 2016;
+  return 2017;
 }
 
 

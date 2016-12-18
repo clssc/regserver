@@ -1,10 +1,4 @@
 /**
- * EC class list
- * @const {string}
- */
-var EC_PDF = 'EC' + getSchoolYear().toString() + '.pdf';
-
-/**
  * Early bird tuition per student.
  * @const {number}
  */
@@ -50,7 +44,7 @@ var NEW_FAMILY_FEE = 100;
  * Mail blast message template HTML file.
  * @const {string}
  */
-var MAIL_BLAST_TEMPLATE = 'ReturningStudentInfo2016-en.html';
+var MAIL_BLAST_TEMPLATE = 'ReturningStudentInfo2017-en.html';
 
 
 /**
@@ -614,8 +608,7 @@ function mailOne(template, emails, pdfs) {
 function testMailOne() {
   var template = DriveApp.getFilesByName(MAIL_BLAST_TEMPLATE).next().getBlob().getDataAsString();
   var pdf = DriveApp.getFilesByName('BlankRegForm' + getSchoolYear().toString()).next().getAs('application/pdf');
-  var ec = DriveApp.getFilesByName(EC_PDF).next();
-  mailOne(template, ['arthur@cchsu.com'], [pdf, ec]);
+  mailOne(template, ['arthur@cchsu.com'], [pdf]);
 }
 
 function mailBlast(opt_fileName) {
@@ -626,7 +619,6 @@ function mailBlast(opt_fileName) {
   var range = sheet.getRange(2, 1, sheet.getLastRow(), sheet.getLastColumn());
   var rows = range.getValues();
   var count = 0;
-  var ec = DriveApp.getFilesByName(EC_PDF).next();
   
   // Sent at most 20 emails at a time
   for (var i = 0; i < rows.length && count < 20; ++i) {
@@ -644,7 +636,7 @@ function mailBlast(opt_fileName) {
     }
     var pdf = DriveApp.getFileById(docId).getAs('application/pdf');
     // Comment out, uncomment only when you need to send out the email.
-    mailOne(template, emails, [pdf, ec]);
+    mailOne(template, emails, [pdf]);
     count++;
     rows[i][4] = 'Y';
   }

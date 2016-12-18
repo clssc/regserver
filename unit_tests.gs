@@ -5,7 +5,7 @@
  */
 
 function testDataRead() {
-  var db = new Db('RegDBTest2016');
+  var db = new Db('RegDBTest2017');
   testClass(db.getClass());
   testFamily(db.getFamily());
   testParent(db.getParent());

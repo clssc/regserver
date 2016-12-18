@@ -90,10 +90,10 @@ FamilyItem = function(values) {
   this.zip = values[4];
   
   /** @type {string} */
-  this.home_phone = values[5];
+  this.home_phone = values[5] || '';
   
   /** @type {string} */
-  this.fax = values[6];
+  this.fax = values[6] || '';
   
   /** @type {string} */
   this.doctor_name = values[7];
@@ -228,12 +228,20 @@ FamilyItem.prototype.detectError = function(warnings) {
       !Validator.zip(this.zip).length) {
     warnings.push('family: ' + familyNumber + ' has invalid address');
   }
-  if (this.home_phone.trim().length &&
-      !Validator.phoneNumber(this.home_phone)) {
+  try {
+    if (this.home_phone.trim().length &&
+        !Validator.phoneNumber(this.home_phone)) {
+      warnings.push('family: ' + familyNumber + ' has invalid home phone');
+    }
+  } catch(e) {
     warnings.push('family: ' + familyNumber + ' has invalid home phone');
   }
-  if (this.contact_phone.trim().length &&
-      !Validator.phoneNumber(this.contact_phone).length) {
+  try {
+    if (this.contact_phone.trim().length &&
+        !Validator.phoneNumber(this.contact_phone).length) {
+      warnings.push('family: ' + familyNumber + ' has invalid emergency contact phone');
+    }
+  } catch(e) {
     warnings.push('family: ' + familyNumber + ' has invalid emergency contact phone');
   }
 };

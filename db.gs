@@ -8,7 +8,7 @@
  * REGDB2016
  * @const {string}
  */
-var DB_DOCID = '1gTZzDlSM46XT0_gKTjg-9a1Uo3fMv-Q8UF-p0RsinuA';
+var DB_DOCID = '1dtBHk5sEjJt4RXHFCzArFw6iDqw8M7HifyPDLhoL6xU';
 
 
 /**
