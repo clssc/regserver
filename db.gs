@@ -5,7 +5,7 @@
 
 
 /**
- * REGDB2016
+ * REGDB2017
  * @const {string}
  */
 var DB_DOCID = '1dtBHk5sEjJt4RXHFCzArFw6iDqw8M7HifyPDLhoL6xU';
