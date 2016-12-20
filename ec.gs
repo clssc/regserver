@@ -31,7 +31,7 @@ var ECClassItem = function(values) {
   this.max_size = values[3];
   
   /** @type {number} */
-  this.current_size = values[4];
+  this.current_size = 0;
 };
 
 
@@ -44,6 +44,9 @@ var ECClassItem = function(values) {
 var ECClasses_ = function(sheet) {
   /** @type {Array.<ECClassItem>} */
   this.data = [];
+  
+  /** @type {Object} */
+  this.map = {};
 
   if (sheet) {
     // Skip title row.
@@ -52,10 +55,104 @@ var ECClasses_ = function(sheet) {
       var rows = range.getValues();
       for (var i = 0; i < rows.length; ++i) {
         if (typeof(rows[i][0]) != 'string' || !rows[i][0]) continue;
-        this.data.push(new ECClassItem(rows[i]));
+        var item = new ECClassItem(rows[i]);
+        this.data.push(item);
+        this.map[item.code] = item;
       }
     }
   }
+};
+
+
+/**
+ * EC enrollment entry.
+ * @param {Array.<Object>} values
+ * @struct
+ * @constructor
+ */
+var ECEnrollmentItem = function(values) {
+  /** @type {number} */
+  this.family_number = values[0];
+  
+  /** @type {string} */
+  this.student_name = values[1];
+  
+  /** @type {string} */
+  this.class = values[2];
+};
+
+
+/**
+ * EC enrollment.
+ * @param {Sheet} sheet
+ * @constructor
+ * @private
+ */
+var ECEnrollment_ = function(sheet) {
+  /** @type {Array.<ECEnrollmentItem>} */
+  this.data = [];
+
+  /** @type {Object} */
+  this.stats = {};
+  
+  /** @private {Object} */
+  this.map_ = {};
+  
+  if (sheet) {
+    // Skip title row.
+    var range = sheet.getRange(2, 1, sheet.getLastRow(), sheet.getLastColumn());
+    if (range) {
+      var rows = range.getValues();
+      for (var i = 0; i < rows.length; ++i) {
+        if (typeof(rows[i][0]) != 'number' || !rows[i][0]) continue;
+        this.data.push(new ECEnrollmentItem(rows[i]));
+      }
+    }
+    
+    this.data.forEach(function(item) {
+      this.update_(item.family_number, item.student_name, item.class);      
+    }.bind(this));
+  }
+};
+
+
+/**
+ * @param {number} familyNumber
+ * @param {string} studentName
+ * @param {string} class
+ * @private
+ */
+ECEnrollment_.prototype.update_ = function(familyNumber, studentName, class) {
+  if (this.stats[class]) {
+    ++this.stats[class];
+  } else {
+    this.stats[class] = 1;
+  }
+      
+  if (this.map_[familyNumber]) {
+    this.map_[familyNumber].push(studentName);
+  } else {
+    this.map_[familyNumber] = [studentName];
+  }
+};
+
+
+/**
+ * @param {number} familyNumber
+ * @param {string} studentName
+ */
+ECEnrollment_.prototype.has = function(familyNumber, studentName) {
+  return this.map_[familyNumber] && this.map_[familyNumber].indexOf(studentName.trim()) != -1;
+};
+
+
+/**
+ * @param {Array} rowContents
+ */
+ECEnrollment_.prototype.add = function(rowContents) {
+  var item = new ECEnrollmentItem(rowContents);
+  this.data.push(item);
+  this.update_(rowContents[0], rowContents[1], rowContents[2]);
 };
 
 
@@ -71,6 +168,9 @@ var ECDB = function(opt_dbName) {
   /** @private {ECEnrollment} */
   this.enrollment_;
   
+  /** @private {Spreadsheet} */
+  this.spreadsheet_;
+  
   this.initialize_(opt_dbName || EC_DOCID);
 };
 
@@ -83,9 +183,19 @@ var ECDB = function(opt_dbName) {
 ECDB.prototype.initialize_ = function(opt_dbName) {
   var dbName = opt_dbName || 'EC' + getSchoolYear().toString();
   var openById = (dbName == EC_DOCID);
-  var spreadsheet = openById ? SpreadsheetApp.openById(dbName) : lookupAndOpenFile(dbName);
+  this.spreadsheet_ = openById ? SpreadsheetApp.openById(dbName) : lookupAndOpenFile(dbName);
   
-  this.classes_ = new ECClasses_(spreadsheet.getSheetByName('Classes'));
+  this.classes_ = new ECClasses_(this.spreadsheet_.getSheetByName('Classes'));
+  this.enrollment_ = new ECEnrollment_(this.spreadsheet_.getSheetByName('Enrollment'));
+  this.updateStats_();
+};
+
+
+/** @private */
+ECDB.prototype.updateStats_ = function() {
+  for (key in this.enrollment_.stats) {
+    this.classes_.map[key].current_size = this.enrollment_.stats[key];
+  }
 };
 
 
@@ -97,15 +207,74 @@ ECDB.prototype.getClasses = function() {
 
 /**
  * Register students to EC class. The transaction will succeed/fail as a whole.
- * @param {Array.<{family_id: number, student: string, class: string}>} data
+ * Caller to validate registration condition.
+ * @param {Array.<{family_number: number, student_name: string, class: string}>} data
  * @return {string}
  */
 ECDB.prototype.register = function(data) {
-  return 'FAILED: not implemented';
+  if (!data.length) {
+    return 'FAIL: empty data';
+  }
+  
+  var count = {};
+  for (var i = 0; i < data.length; ++i) {
+    var item = data[i];
+    if (count[item.class]) {
+      ++count[item.class];
+    } else {
+      count[item.class] = 1;
+    }
+    
+    if (this.enrollment_.has(item.family_number, item.student_name)) {
+      return 'FAIL: already registered: ' + item.family_number + ' ' + item.student_name;
+    }
+  }
+  
+  for (var item in count) {
+    var class = this.classes_.map[item];
+    if (!class) {
+      return 'FAIL: invalid class ' + item;
+    }
+    
+    if (class.max_size < class.current_size + count[item]) {
+      return 'FAIL: class ' + item + ' is full';
+    }
+  }
+  
+  // Now we can really register
+  var sheet = this.spreadsheet_.getSheetByName('Enrollment');
+  for (var i = 0; i < data.length; ++i) {
+    var item = data[i];
+    var rowContents = [item.family_number, item.student_name, item.class];
+    sheet.appendRow(rowContents);
+    this.enrollment_.add(rowContents);
+  }
+  this.updateStats_();
+  return 'OK';
 };
 
 
 function testGetClasses() {
   var ec = new ECDB();
   Logger.log(ec.getClasses());
+}
+
+
+/**
+ * Test will create one dummy entry in EC2017 Enrollment.
+ */
+function testRegister() {
+  var ec = new ECDB();
+  var message = ec.register([]);
+  assertEquals('FAIL: empty data', message);
+  message = ec.register([{family_number: 3388, student_name: 'John Doe', class: 'foo'}]);
+  assertEquals('FAIL: invalid class foo', message);
+  message = ec.register([{family_number: 3388, student_name: 'John Doe', class: 'wes'}]);
+  assertEquals('OK', message);
+  message = ec.register([{family_number: 3388, student_name: 'John Doe', class: 'pai'}]);
+  assertEquals('FAIL: already registered: 3388 John Doe', message);
+  ec.classes_.map['wes'].max_size = 1;
+  message = ec.register([{family_number: 3389, student_name: 'Johnny Doe', class: 'wes'}]);
+  assertEquals('FAIL: class wes is full', message);
+  Logger.log('ALL PASSED');
 }
