@@ -26,7 +26,10 @@ function processMessage(message) {
     return 0;
   }
   
-  return Reg.lookupTuition(familyNumber);
+  return {
+    tuition: Reg.lookupTuition(familyNumber),
+    ec: Reg.lookupEC(familyNumber)
+  };
 }
 
 function doGet(e) {
