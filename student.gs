@@ -163,8 +163,11 @@ StudentItem = function(values) {
   /** @type {boolean} */
   this.active = (values[10].toUpperCase() === 'Y');
   
+  /** @type {boolean} */
+  this.active_prev = (values[11].toUpperCase() === 'Y');
+  
   /** @type {string} */
-  this.note = values[11];
+  this.note = values[12];
 };
 
 
@@ -192,6 +195,7 @@ function testStudent(target) {
   assertTrue(student1.speak_chinese);
   assertEquals('1', student1.text_pref);
   assertEquals(true, student1.active);
+  assertEquals(true, student1.active_prev);
   assertEquals('some notes here', student1.note);
   var warnings = [];
   target.detectDupe(warnings);
@@ -226,6 +230,7 @@ StudentItem.parse = function(values, i, warnings) {
   student.speak_chinese = (values[i + 7].substring(0, 1).toUpperCase() === 'Y');
   student.text_pref = values[i + 8].substring(0, 1);
   student.active = false;
+  student.active_prev = false;
   student.note = '';  // The application form does not have this field.
   return student;
 };
@@ -268,6 +273,7 @@ StudentItem.createTitleRow = function(sheet, item) {
     'speak_chinese',
     'text_pref',
     'active',
+    'active_prev',
     'note'
   ]);
 };
@@ -293,6 +299,7 @@ StudentItem.serialize = function(sheet, item, opt_familyNumber) {
     item.speak_chinese ? 'Y' : 'N',
     item.text_pref.toString(),
     item.active ? 'Y' : 'N',
+    item.active_prev ? 'Y' : 'N',
     item.note
   ]);
 };

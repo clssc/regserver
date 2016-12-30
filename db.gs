@@ -450,3 +450,20 @@ function buildServiceDb() {
     sheet.appendRow(data[j]);
   }
 }
+
+
+/**
+ * @param {number} familyNumber
+ * @return {Object} [{name: string, birth_date: Date}]
+ */
+function getStudentInfo(familyNumber, opt_db) {
+  var db = new Db(opt_db);
+  return db.getStudent().get(familyNumber, false);
+}
+
+function testGetStudentInfo() {
+  var info = getStudentInfo(8765, 'RegDBTest2017');
+  assertEquals(2, info.length);
+//  Logger.log(info[0]);
+//  Logger.log(info[1]);
+}

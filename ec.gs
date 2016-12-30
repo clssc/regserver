@@ -12,6 +12,14 @@ var EC_DOCID = '1LfCjVxymw_OYFLlcwuqNKFJBHAxFUklIRMVSrjXtaTs';
 
 
 /**
+ * School start date, used to calculate EC eligibility.
+ * 2017-09-09. This is GMT, so PST daylight time is 7 hours later.
+ * @const {number}
+ */
+var SCHOOL_START_DATE = new Date(Date.UTC(2017, 9, 9, 7)).getTime();
+
+
+/**
  * EC class entry.
  * @param {Array.<Object>} values
  * @struct
@@ -254,6 +262,38 @@ ECDB.prototype.register = function(data) {
 };
 
 
+/**
+ * @param {number} familyNumber
+ * @param {string=} opt_db optional db name
+ * @return {string} JSON string of object
+ *     [{stu: string, active: boolean, active_prev: boolean, class: [{code: string, desc: string}]}]
+ */
+function lookupEC(familyNumber, opt_db) {
+  var ec = new ECDB();
+  var students = getStudentInfo(familyNumber, opt_db);
+  var now = new Date().getTime() / 1000;
+  var filterClass = function(bd) {
+    var age = (SCHOOL_START_DATE - bd) / 1000 / 60 / 60 / 24 / 365;
+    var classes = ec.getClasses().filter(function(cl) {
+      return (cl.max_size - cl.current_size) > 0 && cl.min_age < age;
+    });
+    return classes.map(function(cl) {
+      return {code: cl.code, desc: cl.name};
+    });
+  };
+  
+  var result = students.map(function(item) {
+    return {
+      stu: item.first_name,
+      class: filterClass(item.dob.getTime()),
+      active: item.active,
+      active_prev: item.active_prev
+    };
+  });
+  
+  return JSON.stringify(result);
+}
+
 function testGetClasses() {
   var ec = new ECDB();
   Logger.log(ec.getClasses());
@@ -277,4 +317,8 @@ function testRegister() {
   message = ec.register([{family_number: 3389, student_name: 'Johnny Doe', class: 'wes'}]);
   assertEquals('FAIL: class wes is full', message);
   Logger.log('ALL PASSED');
+}
+
+function testLookupEC() {
+  Logger.log(lookupEC(1014));
 }
