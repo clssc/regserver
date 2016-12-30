@@ -291,7 +291,7 @@ function lookupEC(familyNumber, opt_db) {
     };
   });
   
-  return JSON.stringify(result);
+  return result;
 }
 
 function testGetClasses() {
