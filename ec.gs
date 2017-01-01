@@ -243,10 +243,7 @@ ECDB.prototype.register = function(data) {
     if (!class) {
       return 'FAIL: invalid class ' + item;
     }
-    
-    if (class.max_size < class.current_size + count[item]) {
-      return 'FAIL: class ' + item + ' is full';
-    }
+    // We do not check class size here. When this is called, customer already paid.
   }
   
   // Now we can really register
@@ -266,14 +263,17 @@ ECDB.prototype.register = function(data) {
  * @param {number} familyNumber
  * @param {string=} opt_db optional db name
  * @return {string} JSON string of object
- *     [{stu: string, active: boolean, active_prev: boolean, class: [{code: string, desc: string}]}]
+ *     [{stu: string, class: [{code: string, desc: string}]}]
  */
 function lookupEC(familyNumber, opt_db) {
   var ec = new ECDB();
-  var students = getStudentInfo(familyNumber, opt_db);
+  var students = getStudentInfo(familyNumber, opt_db).filter(function(item) {
+    return item.active_prev;
+  });
+  
   var now = new Date().getTime() / 1000;
   var filterClass = function(bd) {
-    var age = (SCHOOL_START_DATE - bd) / 1000 / 60 / 60 / 24 / 365;
+    var age = (SCHOOL_START_DATE - bd) / 31536000000; // 1000ms * 60s * 60m * 24hr * 365d;
     var classes = ec.getClasses().filter(function(cl) {
       return (cl.max_size - cl.current_size) > 0 && cl.min_age < age;
     });
@@ -286,8 +286,6 @@ function lookupEC(familyNumber, opt_db) {
     return {
       stu: item.first_name,
       class: filterClass(item.dob.getTime()),
-      active: item.active,
-      active_prev: item.active_prev
     };
   });
   
@@ -320,5 +318,6 @@ function testRegister() {
 }
 
 function testLookupEC() {
-  Logger.log(lookupEC(1014));
+  //Logger.log(lookupEC(1014));
+  Logger.log(lookupEC(311));
 }
