@@ -67,13 +67,20 @@ function writeData(data) {
   var spreadsheet = SpreadsheetApp.openById(PAYMENT_DOCID);
   if (spreadsheet) {
     var sheet = spreadsheet.getActiveSheet();
-    var desc = data['description'];
-    var index = desc.indexOf(' ');
-    if (index <= 0) {
+    var desc = data['description'].split('#');
+    
+    if (desc.length != 3) {
       return false;
     }
-    var familyNumber = desc.slice(0, index);
-    var email = desc.slice(index + 1);
+    var familyNumber = desc[0];
+    var email = desc[1];
+    var ec = null;
+    try {
+      ec = JSON.parse(desc[2]);
+      Reg.registerEC(familyNumber, ec);
+    } catch (e) {
+      DebugLog('Invalid ec data:' + ec);
+    }
     var amount = data['currency'].toUpperCase() + '$' + (parseInt(data['amount'], 10) / 100).toString();
     
     sheet.appendRow([
@@ -131,7 +138,7 @@ function testProcessData() {
     'created': 1422227429,
     'livemode': false,
     'paid': true,
-    'amount': 140000,
+    'amount': 170000,
     'currency': 'usd',
     'refunded': false,
     'captured': true,
@@ -164,7 +171,7 @@ function testProcessData() {
     'amount_refunded': 0,
     'customer': null,
     'invoice': null,
-    'description': '1020 ' + TEST_MAIL_ACCOUNT,
+    'description': '1020#' + TEST_MAIL_ACCOUNT + '#[{"name":"Sophia","code":"cal"},{"name":"Rebecca","code":"che"}]',
     'dispute': null,
     'metadata': {
     },
