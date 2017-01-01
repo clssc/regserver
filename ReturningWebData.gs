@@ -26,9 +26,13 @@ function processMessage(message) {
     return 0;
   }
   
+  // Optimization: if tuition is already paid, no need to check ec.
+  var tuition = Reg.lookupTuition(familyNumber);
+  var ec = (tuition > 0) ? Reg.lookupEC(familyNumber) : [];
+  
   return {
-    tuition: Reg.lookupTuition(familyNumber),
-    ec: Reg.lookupEC(familyNumber)
+    tuition: tuition,
+    ec: ec
   };
 }
 
@@ -50,6 +54,6 @@ function processData(jsonString) {
 }
 
 function testLookupTuition() {
-  var samplePayload = '1020';
+  var samplePayload = '311';
   Logger.log(processData(samplePayload).getContent());
 }
