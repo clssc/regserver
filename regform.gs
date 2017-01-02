@@ -116,7 +116,7 @@ RegForm = function(opt_dataFileName) {
  */
 RegForm.prototype.initialize_ = function(opt_dataFileName, opt_serviceDbName) {
   DebugLog('Regform init');
-  this.db_ = new Db(opt_dataFileName);
+  this.db_ = Db.getInstance(opt_dataFileName);
   this.serviceDb_ = new ServiceDb(opt_serviceDbName);
 };
 

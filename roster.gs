@@ -54,7 +54,7 @@ var CRLF = '<br/>';
  */
 function getStats() {
   var year = getSchoolYear();
-  var db = new Db();
+  var db = Db.getInstance();
   var activeFamily = {};
   var activeStudentCount = 0;
   
@@ -105,7 +105,7 @@ function generateFullPublicRoster(opt_db, opt_output) {
     titleRow.push('Class');
     sheet.appendRow(titleRow);
   
-    var db = new Db(opt_db);
+    var db = Db.getInstance(opt_db);
     var students = db.getStudent().getAll();
   
     for (var i = 0; i < students.length; ++i) {
@@ -165,7 +165,7 @@ function generateFullRoster(opt_db, opt_output) {
     'note'
   ]);
   
-  var db = new Db(opt_db);
+  var db = Db.getInstance(opt_db);
   var students = db.getStudent().getAll();
   var parentTable = db.getParent();
   
@@ -223,7 +223,7 @@ function generateFullRoster(opt_db, opt_output) {
  */
 function generatePublicRosterData(opt_db) {
   var data = [];
-  var db = new Db(opt_db);
+  var db = Db.getInstance(opt_db);
   var classes = db.getClass().getAll();
   var students = db.getStudent().getAllActive();
   
@@ -360,7 +360,7 @@ function generatePublicRoster(opt_db, opt_output) {
  */
 function generateClassRosterData() {
   var data = [];
-  var db = new Db();
+  var db = Db.getInstance();
   var classes = db.getClass().getAll();
   var students = db.getStudent().getAllActive();
   var parent = db.getParent();

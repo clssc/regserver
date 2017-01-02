@@ -230,7 +230,7 @@ ECDB.prototype.register = function(familyNumber, data) {
   }
 
   if (!this.regDb_) {
-    this.regDb_ = new Db(this.regDbName_);
+    this.regDb_ = Db.getInstance(this.regDbName_);
   }
   
   var students = this.regDb_.getStudent().get(familyNumber, false);
@@ -282,6 +282,7 @@ ECDB.prototype.register = function(familyNumber, data) {
 
 
 /**
+ * Lookup available EC classes for returning families.
  * @param {number} familyNumber
  * @param {string=} opt_db optional db name
  * @return {string} JSON string of object
@@ -319,9 +320,18 @@ function registerEC(familyNumber, data) {
   return ec.register(familyNumber, data);
 }
 
-function testGetClasses() {
+// Return all EC classes for new students.
+function getECClasses() {
   var ec = new ECDB();
-  Logger.log(ec.getClasses());
+  return ec.getClasses().filter(function(cls) {
+    return cls.current_size <= cls.max_size;
+  }).map(function(cls) {
+    return {code: cls.code, desc: cls.name, min_age: cls.min_age};
+  });
+}
+
+function testGetECClasses() {
+  Logger.log(getECClasses());
 }
 
 /**

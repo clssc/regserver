@@ -339,7 +339,7 @@ Db.prototype.setStudentAsActive = function(familyId) {
 Db.getInstance = function(opt_dbName) {
   var dbName = opt_dbName || DB_DOCID;
   if (!DBInstances.dbName) {
-    return new Db(dbName, true);
+    DBInstances.dbName = new Db(dbName, dbName == DB_DOCID);
   }
   return DBInstances.dbName;
 }
@@ -361,7 +361,7 @@ function getNextAvailableFamilyNumber() {
 
 /** Construct fast name lookup table */
 function buildNameLookup() {
-  var db = new Db();
+  var db = Db.getInstance();
   var parents = db.getParent().getAll();
   var students = db.getStudent().getAll();
   var tuples = [];
@@ -399,7 +399,7 @@ function buildNameLookup() {
 
 /** Construct mail blast sheet */
 function buildMailBlast() {
-  var db = new Db();
+  var db = Db.getInstance();
   var outputFile = lookupAndOpenFile('MailBlast' + getSchoolYear().toString());
   var sheet = outputFile.getActiveSheet();
   sheet.clear();
@@ -436,7 +436,7 @@ function buildMailBlast() {
 
 /** Construct ServiceDB template */
 function buildServiceDb() {
-  var db = new Db();
+  var db = Db.getInstance();
   var outputFile = lookupAndOpenFile('ServiceDB' + getSchoolYear().toString());
   var sheet = outputFile.getActiveSheet();
   sheet.clear();
@@ -474,7 +474,7 @@ function buildServiceDb() {
  * @return {Object} [{name: string, birth_date: Date}]
  */
 function getStudentInfo(familyNumber, opt_db) {
-  var db = new Db(opt_db);
+  var db = Db.getInstance(opt_db);
   return db.getStudent().get(familyNumber, false);
 }
 
@@ -491,7 +491,7 @@ function testGetStudentInfo() {
  * @param {string=} opt_db
  */
 function setStudentAsActive(familyNumber, opt_db) {
-  var db = new Db(opt_db);
+  var db = Db.getInstance(opt_db);
   db.setStudentAsActive(familyNumber);
 }
 
