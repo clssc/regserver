@@ -291,15 +291,6 @@ Db.prototype.detectError = function(warnings) {
 
 
 /**
- * Merge sanitized pool.
- * @param {string} poolName File name of the pool.
- */
-Db.prototype.mergePool = function(poolName) {
-  // TODO(arthurhsu): implement
-};
-
-
-/**
  * Lookup next available family number.
  * @return {number}.
  */
@@ -312,6 +303,31 @@ Db.prototype.nextAvailableFamilyNumber = function() {
     }
   }
   return family_number + 1;  
+};
+
+
+/**
+ * Finds row by family id.
+ * @param {number} familyId
+ * @private
+ */
+Db.prototype.setStudentAsActive = function(familyId) {
+  var sheet = this.tables_['Student'];
+  var range = sheet.getRange(2, 1, sheet.getLastRow(), 1);
+  var rows = range.getValues();
+  for (var i = 0; i < rows.length; ++i) {
+    if (rows[i][0] == familyId) {
+      var cellRange = 'A' + (i + 2).toString() + ':M' + (i + 2).toString();
+      var target = sheet.getRange(cellRange.toString())
+      target.getCell(1, 11).setValue('Y');  // Active
+      var memo = target.getCell(1, 13).getValue();
+      if (memo && memo.length) {
+        memo += '; ';
+      }
+      memo += 'Sys: Reg: ' + Utilities.formatDate(new Date(), 'PST', 'MM/dd/yy');
+      target.getCell(1, 13).setValue(memo);
+    }
+  }
 };
 
 
@@ -454,6 +470,7 @@ function buildServiceDb() {
 
 /**
  * @param {number} familyNumber
+ * @param {string=} opt_db
  * @return {Object} [{name: string, birth_date: Date}]
  */
 function getStudentInfo(familyNumber, opt_db) {
@@ -466,4 +483,19 @@ function testGetStudentInfo() {
   assertEquals(2, info.length);
 //  Logger.log(info[0]);
 //  Logger.log(info[1]);
+}
+
+
+/**
+ * @param {number} familyNumber
+ * @param {string=} opt_db
+ */
+function setStudentAsActive(familyNumber, opt_db) {
+  var db = new Db(opt_db);
+  db.setStudentAsActive(familyNumber);
+}
+
+// Side effect on test DB, need manual edit to set it back
+function testSetStudentAsActive() {
+  setStudentAsActive(8765, 'RegDBTest2017');
 }
