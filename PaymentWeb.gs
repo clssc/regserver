@@ -61,31 +61,36 @@ function mailConfirmation(email, familyNumber, amount, paymentId) {
  * @return {boolean}
  */
 function writeData(data) {
-  if (!data.description || !data.card) {
+  if (!data.description || !data.card || !data.paid) {
     return false;
   }
   var spreadsheet = SpreadsheetApp.openById(PAYMENT_DOCID);
   if (spreadsheet) {
     var sheet = spreadsheet.getActiveSheet();
-    var desc = data['description'].split('#');
-    
-    if (desc.length != 3) {
-      return false;
-    }
-    var familyNumber = desc[0];
-    var email = desc[1];
-    var ec = null;
-    try {
-      ec = JSON.parse(desc[2]);
-      Reg.registerEC(familyNumber, ec);
-    } catch (e) {
-      DebugLog('Invalid ec data:' + ec);
-    }
+    var familyNumber = data.family_number;
+    var email = data.email;
     var amount = data['currency'].toUpperCase() + '$' + (parseInt(data['amount'], 10) / 100).toString();
+    var regData = data.reg_data || null;
+    var actualFamilyNumber = familyNumber;
+    
+    if (regData != null) {
+      actualFamilyNumber = Reg.addNewFamily(familyNumber, regData);
+    } else {
+      Reg.setStudentAsActive(familyNumber);    
+      var ec = null;
+      if (data.ec) {
+        try {
+          ec = JSON.parse(data.ec);
+          Reg.registerEC(familyNumber, ec);
+        } catch(e) {
+          DebugLog('Invalid ec data:' + data.ec);
+        }
+      }
+    }
     
     sheet.appendRow([
       data['id'],
-      familyNumber,
+      actualFamilyNumber,
       email,
       data['paid'],
       data['refunded'],
@@ -93,12 +98,12 @@ function writeData(data) {
       data['card']['last4'],
       data['card']['brand'],
       data['card']['name'],
-      Utilities.formatDate(new Date(), 'PST', 'MM-dd-yyyy HH:mm:ss z').toString()
+      Utilities.formatDate(new Date(), 'PST', 'MM-dd-yyyy HH:mm:ss z').toString(),
+      (ec !== null) ? 'Have EC' : 'No EC',
+      (actualFamilyNumber != familyNumber) ? 'FN change:' + familyNumber + '->' + actualFamilyNumber : ''
     ]);
     
-    if (data['paid']) {
-      mailConfirmation(email, familyNumber, amount, data['id']);
-    }
+    mailConfirmation(email, actualFamilyNumber, amount, data['id']);
     return true;
   }
   
@@ -171,7 +176,10 @@ function testProcessData() {
     'amount_refunded': 0,
     'customer': null,
     'invoice': null,
-    'description': '1020#' + TEST_MAIL_ACCOUNT + '#[{"name":"Sophia","code":"cal"},{"name":"Rebecca","code":"che"}]',
+    'description': '1020 ' + TEST_MAIL_ACCOUNT,
+    'family_number': 1020,
+    'email': TEST_MAIL_ACCOUNT,
+    'ec': '[{"name":"Sophia","code":"cal"},{"name":"Rebecca","code":"che"}]',
     'dispute': null,
     'metadata': {
     },
