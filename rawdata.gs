@@ -4,10 +4,6 @@
  */
 
 
-/** @const {string} */
-var RAWDATA_DOCID = '1A6OPL_hkBBEoP9KNcY5kYJGsU-MQKK1KTOulpo99X-M';
-
-
 /**
  * Generates fail string with reason.
  * @param {string} message 
@@ -32,10 +28,14 @@ function importWebData(data) {
     return rawData.errMsg;
   }
   
-  if (writeEntry(rawData.entry)) {
-    return 'SUCCESS: data accepted, family number = ' + rawData.entry.family.family_number;
+  var db = Db.getInstance();
+  var familyNumber = db.lookupFamilyNumber(rawData.names);
+  if (familyNumber == -1) {
+    familyNumber = db.nextAvailableFamilyNumber();
+    return 'SUCCESS\n' + familyNumber + '\n' + JSON.stringify(rawData.entry);
   }
-  return failImport('already paid, family number = ' + rawData.entry.family.family_number);
+  
+  return failImport('already paid or returning family, family number = ' + familyNumber);
 }
 
 
@@ -44,7 +44,13 @@ function importWebData(data) {
  * @constructor
  */
 RawData = function(data) {
-  this.entry = {};
+  this.entry = {ec: []};
+  this.ecClasses = ['nada'];
+  getECClasses().forEach(function(cls) {
+    this.ecClasses.push(cls.code);
+  }.bind(this));
+  
+  this.names = [];
 
   this.errMsg = this.validateFamily(data.family);
   if (!this.errMsg.length) {
@@ -52,9 +58,6 @@ RawData = function(data) {
   }
   if (!this.errMsg.length) {
     this.errMsg = this.validateStudents(data.students, data.family.video_consent);
-  }
-  if (!this.errMsg.length) {
-    this.generateFamilyNumber();
   }
 }
 
@@ -97,7 +100,7 @@ RawData.prototype.validateParents = function(data) {
     if (!parent.english_name.length) {
       return failImport('Invalid parent ' + i + ': no eng_name');
     }
-    
+    this.names.push(parent.english_name);
     parent.chinese_name = data[i].chn_name || '';
     parent.occupation = data[i].spec || '';
     parent.work_phone = Validator.phoneNumber(data[i].work_ph);
@@ -117,7 +120,7 @@ RawData.prototype.validateParents = function(data) {
 }
 
 function generateNotes(consent, tshirt, learned) {
-  var notes = 'regTime:' + Utilities.formatDate(new Date(), 'PST', 'MM-dd-yy hh:mm:ss') + ';';
+  var notes = 'Sys: New:' + Utilities.formatDate(new Date(), 'PST', 'MM-dd-yy') + ';';
   if (!consent) {
     notes += 'no video;';
   }
@@ -126,9 +129,9 @@ function generateNotes(consent, tshirt, learned) {
   }
   var learnedYear = parseInt(learned, 10);
   switch (learnedYear) {
-    case 1: notes += '<1yr chinese learning;'; break;
-    case 2: notes += '1-2yr chinese learning;'; break;
-    case 3: notes += '2+yr chinese learning;'; break;
+    case 1: notes += '<1yr exp;'; break;
+    case 2: notes += '1-2yr exp;'; break;
+    case 3: notes += '2+yr exp;'; break;
     default: break;
   }
   return notes;
@@ -147,6 +150,14 @@ RawData.prototype.validateStudents = function(data, consent) {
     if (!student.last_name.length || !student.first_name.length) {
       return failImport('Invalid student ' + i + ': no name');
     }
+    if (this.ecClasses.indexOf(data[i].ec) == -1) {
+      return failImport('Invalid student ' + i + ': EC class full');
+    }
+    
+    this.names.push(student.first_name + ' ' + student.last_name);
+    if (data[i].ec != 'nada') {
+      this.entry.ec.push({'name': student.first_name, 'code': data[i].ec});
+    }
     student.chinese_name = data[i].chn_name || '';
     student.dob = data[i].dob;
     student.gender = data[i].gender == 'F' ? 'F' : 'M';
@@ -154,40 +165,17 @@ RawData.prototype.validateStudents = function(data, consent) {
     student.currClass = '';
     student.speak_chinese = data[i].sch == 'Y' ? 'Y' : 'N';
     student.text_pref = data[i].pref;
-    student.active = false;
+    student.active = true;
+    student.active_prev = false;
     student.note = generateNotes(!!consent, data[i].tshirt, data[i].learned);
     students.push(student);
   }
   this.entry.students = students;
   return '';
-}
+};
 
 
-/**
- * Generate Family number for web data.
- * @param {Db} db New student reg database.
- * @param {Object} entry Parsed data entry.
- */
-RawData.prototype.generateFamilyNumber = function() {
-  var familyNumber = -1;
-  var fn = new FamilyNumberLookup();
-  var rawDb = new Db(RAWDATA_DOCID, true);  // Open raw DB.
-  for (var i = 0; i < this.entry.parents.length && familyNumber == -1; ++i) {
-    familyNumber = fn.lookup(this.entry.parents[i].english_name);
-    familyNumber = rawDb.lookupFamilyNumber(this.entry.parents[i].english_name);
-  }
-  for (var i = 0; i < this.entry.students.length && familyNumber == -1; ++i) {
-    var student = this.entry.students[i];
-    var name = student.first_name + ' ' + student.last_name;
-    familyNumber = fn.lookup(name);
-    familyNumber = rawDb.lookupFamilyNumber(name);
-  }
-  for (var i = 0; i < this.entry.parents.length && familyNumber == -1; ++i) {
-    familyNumber = fn.lookup(this.entry.parents[i].chinese_name);
-  }
-  if (familyNumber == -1) {
-    familyNumber = rawDb.nextAvailableFamilyNumber();
-  }
+RawData.prototype.setFamilyNumber = function(familyNumber) {
   this.entry.family.family_number = familyNumber;
   for (var i = 0; i < this.entry.parents.length; ++i) {
     this.entry.parents[i].family_number = familyNumber;
@@ -196,65 +184,6 @@ RawData.prototype.generateFamilyNumber = function() {
     this.entry.students[i].family_number = familyNumber;
   }
 };
-
-
-/**
- * Writes entry to RawDB.
- * @param {Object} entry
- * @return {boolean}
- */
-function writeEntry(entry) {
-  var outputFile = SpreadsheetApp.openById(RAWDATA_DOCID);
-  var sheet = outputFile.getSheetByName('Student');
-  var familyNumber = entry.students[0].family_number;
-  var range = sheet.getRange(2, 1, sheet.getLastRow(), sheet.getLastColumn());
-  var rows = range.getValues();
-  for (var i = 0; i < rows.length; ++i) {
-    if (rows[i][0] == familyNumber && rows[i][10] == 'Y') {
-      return false;  // Already paid
-    }
-  }
-  
-  var familyTable = outputFile.getSheetByName('Family');
-  var parentTable = outputFile.getSheetByName('Parent');
-
-  FamilyItem.serialize(familyTable, entry.family);
-  for (var j = 0; j < entry.parents.length; ++j) {
-    ParentItem.serialize(parentTable, entry.parents[j]);
-  }
-  for (var j = 0; j < entry.students.length; ++j) {
-    StudentItem.serialize(sheet, entry.students[j]);
-  }
-  return true;
-}
-
-
-/**
- * Update payment information.
- * @param {number} familyNumber
- * @param {number} amount
- */
-function reportNewStudentPayment(familyNumber, amount) {
-  var outputFile = SpreadsheetApp.openById(RAWDATA_DOCID);  
-  var sheet = outputFile.getSheetByName('Student');
-  
-  var range = sheet.getRange(2, 1, sheet.getLastRow(), sheet.getLastColumn());
-  var rows = range.getValues();
-  for (var i = 0; i < rows.length; ++i) {
-    if (rows[i][0] == familyNumber) {
-      var values = rows[i].slice();
-      values[10] = 'Y';  // Mark as active.
-      var cellRange = 'A' + (i + 2).toString() + ':O' + (i + 2).toString();
-      sheet.getRange(cellRange.toString()).setValues([values]);
-    }
-  }
-}
-
-// WARNING: side effects, do not run when RawDB is live.
-function testReportNewStudentPayment() {
-  reportNewStudentPayment(1423, 1000);
-}
-
 
 function getTestData() {
   return {
@@ -300,7 +229,8 @@ function getTestData() {
         "sch":"Y",
         "pref":"1",
         "tshirt":"YM",
-        "learned":"1"
+        "learned":"1",
+        "ec":"nada"
       },
       {
         "last_name":"Doe",
@@ -311,7 +241,8 @@ function getTestData() {
         "sch":"N",
         "pref":"2",
         "tshirt":"YL",
-        "learned":"2"
+        "learned":"2",
+        "ec":"che"
       },
       {
         "last_name":"Doe",
@@ -322,7 +253,8 @@ function getTestData() {
         "sch":"N",
         "pref":"3",
         "tshirt":"AS",
-        "learned":"0"
+        "learned":"0",
+        "ec":"nada"
       },
       {
         "last_name":"Doe",
@@ -333,7 +265,8 @@ function getTestData() {
         "sch":"Y",
         "pref":"1",
         "tshirt":"YL",
-        "learned":"3"
+        "learned":"3",
+        "ec":"mus"
       }
     ]
   };
@@ -341,9 +274,4 @@ function getTestData() {
 
 function testImportParsing() {
   Logger.log(importWebData(getTestData()));
-}
-
-function testFamilyNumber() {
-  var rawDb = new Db(RAWDATA_DOCID, true);  // Open raw DB.
-  Logger.log(rawDb.nextAvailableFamilyNumber());
 }

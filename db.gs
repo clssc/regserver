@@ -174,31 +174,40 @@ Db.prototype.initialize_ = function(opt_dbName, opt_openById) {
 /**
  * Lookup family number by name of any member of that family. The name format
  * must be first_name last_name as what's input in enrollment form.
- * @param {string} name Name of the family member.
+ * @param {Array<string>|string} names Name of the family member.
  * @return {number} Family number, -1 means not found.
  */
-Db.prototype.lookupFamilyNumber = function(name) {
-  if (name.trim().length == 0) {
-    return -1;
+Db.prototype.lookupFamilyNumber = function(names) {
+  if (!Array.isArray(names)) {
+    names = [names];
   }
+
   var parents = this.getParent().getAll();
   var students = this.getStudent().getAll();
-  var lowerCaseName = name.toLowerCase();
   
-  // Search parent table first.
-  for (var i = 0; i < parents.length; ++i) {
-    if (parents[i].english_name.toLowerCase() == lowerCaseName ||
-        parents[i].chinese_name == name) {
-      return parents[i].family_number;
+  for (var i = 0; i < names.length; ++i) {
+    var name = names[i];
+    if (name.trim().length == 0) {
+      return -1;
     }
-  }
-  
-  // If not, search student table.
-  for (var i = 0; i < students.length; ++i) {
-    var english_name = students[i].first_name + ' ' + students[i].last_name;
-    english_name = english_name.toLowerCase();
-    if (english_name == lowerCaseName || students[i].chinese_name == name) {
-      return students[i].family_number;
+    var lowerCaseName = name.toLowerCase();
+    
+    // Search parent table first.
+    for (var j = 0; j < parents.length; ++j) {
+      if (parents[j].english_name.toLowerCase() == lowerCaseName ||
+          parents[j].chinese_name == name) {
+        return parents[j].family_number;
+      }
+    }
+    
+    // If not, search student table.
+    for (var j = 0; j < students.length; ++j) {
+      var english_name = students[j].first_name + ' ' + students[j].last_name;
+      english_name = english_name.toLowerCase();
+      if (english_name.substring(0, 3) == 'ida') Logger.log(english_name + ' ' + lowerCaseName);
+      if (english_name == lowerCaseName || students[j].chinese_name == name) {
+        return students[j].family_number;
+      }
     }
   }
   
@@ -212,6 +221,7 @@ function testLookupFamilyNumber(db) {
   assertEquals(8765, db.lookupFamilyNumber('Lily Lee'));
   assertEquals(8765, db.lookupFamilyNumber('lily lee'));
   assertEquals(8765, db.lookupFamilyNumber('李強'));
+  assertEquals(8765, db.lookupFamilyNumber(['Lily Lee', '李強']));
   assertEquals(2345, db.lookupFamilyNumber('John Doe'));
   assertEquals(2345, db.lookupFamilyNumber('杜凱琪'));
   DebugLog('testLookupFamilyNumber: PASSED');
@@ -309,7 +319,6 @@ Db.prototype.nextAvailableFamilyNumber = function() {
 /**
  * Finds row by family id.
  * @param {number} familyId
- * @private
  */
 Db.prototype.setStudentAsActive = function(familyId) {
   var sheet = this.tables_['Student'];
@@ -328,6 +337,56 @@ Db.prototype.setStudentAsActive = function(familyId) {
       target.getCell(1, 13).setValue(memo);
     }
   }
+};
+
+
+/**
+ * Add new family.
+ * @param {number} familyId
+ * @param {string} submission
+ * @return {number} Actual family number assigned
+ */
+Db.prototype.addNewFamily = function(familyId, submission) {
+  var data;
+  try {
+    data = JSON.parse(submission);
+  } catch(e) {
+    DebugLog('WARNING: error parsing data: ' + submission);
+    return -1;
+  }
+  
+  var nextId = this.nextAvailableFamilyNumber();
+  if (nextId != familyId) {
+    DebugLog('WARNING: race condition detected: ' + familyId + '->' + nextId);
+    familyId = nextId;
+  }
+  
+  var rawData = new RawData(data);
+  if (rawData.errMsg.length) {  // This should not happen, unless network errored.
+    DebugLog('WARNING: error analyzing data: ' + submission);
+    return -1;
+  }
+  
+  rawData.setFamilyNumber(familyId);
+  var entry = rawData.entry;
+  var familyTable = this.tables_['Family'];
+  FamilyItem.serialize(familyTable, entry.family);
+  
+  var parentTable = this.tables_['Parent'];
+  for (var j = 0; j < entry.parents.length; ++j) {
+    ParentItem.serialize(parentTable, entry.parents[j]);
+  }
+  
+  var studentTable = this.tables_['Student'];
+  for (var j = 0; j < entry.students.length; ++j) {
+    StudentItem.serialize(studentTable, entry.students[j]);
+  }
+  
+  if (rawData.entry.ec.length) {
+    registerEC(familyId, rawData.entry.ec);
+  }
+  
+  return familyId;
 };
 
 
@@ -498,4 +557,15 @@ function setStudentAsActive(familyNumber, opt_db) {
 // Side effect on test DB, need manual edit to set it back
 function testSetStudentAsActive() {
   setStudentAsActive(8765, 'RegDBTest2017');
+}
+
+function addNewFamily(familyNumber, submission, opt_db) {
+  var db = Db.getInstance(opt_db);
+  return db.addNewFamily(familyNumber, submission);
+}
+
+// Side effect on RegDBTest2017 and EC2017, need manual edit to set it back
+function testAddFamily() {
+  var submission = JSON.stringify(getTestData());
+  addNewFamily(10000, submission, 'RegDBTest2017');
 }

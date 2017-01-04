@@ -12,7 +12,7 @@ var SERVICE_DB_NAME = 'ServiceDB';
 
 
 /**
- * ServiceDB2015 (previous year)
+ * ServiceDB2016 (previous year)
  * @const {string}
  */
 var SERVICEDB_DOCID = '19UMfbAKD-t6iyF22FDeMO2Ta2pIldbVFTeBhBG9jeNE';

@@ -190,8 +190,9 @@ function clearDoc(doc) {
  * Share file (i.e. move a newly created file to public folder).
  * @param {Document|Spreadsheet} doc File to move.
  * @param {string=} opt_folder
+ * @param {boolean=} opt_shareToDomain
  */
-function shareFile(doc, opt_folder) {
+function shareFile(doc, opt_folder, opt_shareToDomain) {
   var it = DriveApp.getFoldersByName(opt_folder || PUBLIC_FOLDER);
   while (it.hasNext()) {
     var reports = it.next();
@@ -203,6 +204,9 @@ function shareFile(doc, opt_folder) {
       var docFile = DriveApp.getFileById(docId);
       folder.addFile(docFile);
       root.removeFile(docFile);
+      if (opt_shareToDomain) {
+        docFile.setSharing(DriveApp.Access.DOMAIN_WITH_LINK, DriveApp.Permission.EDIT);
+      }
       return;
     }
   }
