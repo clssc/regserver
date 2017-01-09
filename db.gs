@@ -5,10 +5,10 @@
 
 
 /**
- * REGDB2016
+ * REGDB2017
  * @const {string}
  */
-var DB_DOCID = '1gTZzDlSM46XT0_gKTjg-9a1Uo3fMv-Q8UF-p0RsinuA';
+var DB_DOCID = '1dtBHk5sEjJt4RXHFCzArFw6iDqw8M7HifyPDLhoL6xU';
 
 
 /**
@@ -174,31 +174,40 @@ Db.prototype.initialize_ = function(opt_dbName, opt_openById) {
 /**
  * Lookup family number by name of any member of that family. The name format
  * must be first_name last_name as what's input in enrollment form.
- * @param {string} name Name of the family member.
+ * @param {Array<string>|string} names Name of the family member.
  * @return {number} Family number, -1 means not found.
  */
-Db.prototype.lookupFamilyNumber = function(name) {
-  if (name.trim().length == 0) {
-    return -1;
+Db.prototype.lookupFamilyNumber = function(names) {
+  if (!Array.isArray(names)) {
+    names = [names];
   }
+
   var parents = this.getParent().getAll();
   var students = this.getStudent().getAll();
-  var lowerCaseName = name.toLowerCase();
   
-  // Search parent table first.
-  for (var i = 0; i < parents.length; ++i) {
-    if (parents[i].english_name.toLowerCase() == lowerCaseName ||
-        parents[i].chinese_name == name) {
-      return parents[i].family_number;
+  for (var i = 0; i < names.length; ++i) {
+    var name = names[i];
+    if (name.trim().length == 0) {
+      return -1;
     }
-  }
-  
-  // If not, search student table.
-  for (var i = 0; i < students.length; ++i) {
-    var english_name = students[i].first_name + ' ' + students[i].last_name;
-    english_name = english_name.toLowerCase();
-    if (english_name == lowerCaseName || students[i].chinese_name == name) {
-      return students[i].family_number;
+    var lowerCaseName = name.toLowerCase();
+    
+    // Search parent table first.
+    for (var j = 0; j < parents.length; ++j) {
+      if (parents[j].english_name.toLowerCase() == lowerCaseName ||
+          parents[j].chinese_name == name) {
+        return parents[j].family_number;
+      }
+    }
+    
+    // If not, search student table.
+    for (var j = 0; j < students.length; ++j) {
+      var english_name = students[j].first_name + ' ' + students[j].last_name;
+      english_name = english_name.toLowerCase();
+      if (english_name.substring(0, 3) == 'ida') Logger.log(english_name + ' ' + lowerCaseName);
+      if (english_name == lowerCaseName || students[j].chinese_name == name) {
+        return students[j].family_number;
+      }
     }
   }
   
@@ -212,6 +221,7 @@ function testLookupFamilyNumber(db) {
   assertEquals(8765, db.lookupFamilyNumber('Lily Lee'));
   assertEquals(8765, db.lookupFamilyNumber('lily lee'));
   assertEquals(8765, db.lookupFamilyNumber('李強'));
+  assertEquals(8765, db.lookupFamilyNumber(['Lily Lee', '李強']));
   assertEquals(2345, db.lookupFamilyNumber('John Doe'));
   assertEquals(2345, db.lookupFamilyNumber('杜凱琪'));
   DebugLog('testLookupFamilyNumber: PASSED');
@@ -291,15 +301,6 @@ Db.prototype.detectError = function(warnings) {
 
 
 /**
- * Merge sanitized pool.
- * @param {string} poolName File name of the pool.
- */
-Db.prototype.mergePool = function(poolName) {
-  // TODO(arthurhsu): implement
-};
-
-
-/**
  * Lookup next available family number.
  * @return {number}.
  */
@@ -316,6 +317,80 @@ Db.prototype.nextAvailableFamilyNumber = function() {
 
 
 /**
+ * Finds row by family id.
+ * @param {number} familyId
+ */
+Db.prototype.setStudentAsActive = function(familyId) {
+  var sheet = this.tables_['Student'];
+  var range = sheet.getRange(2, 1, sheet.getLastRow(), 1);
+  var rows = range.getValues();
+  for (var i = 0; i < rows.length; ++i) {
+    if (rows[i][0] == familyId) {
+      var cellRange = 'A' + (i + 2).toString() + ':M' + (i + 2).toString();
+      var target = sheet.getRange(cellRange.toString())
+      target.getCell(1, 11).setValue('Y');  // Active
+      var memo = target.getCell(1, 13).getValue();
+      if (memo && memo.length) {
+        memo += '; ';
+      }
+      memo += 'Sys: Reg: ' + Utilities.formatDate(new Date(), 'PST', 'MM/dd/yy');
+      target.getCell(1, 13).setValue(memo);
+    }
+  }
+};
+
+
+/**
+ * Add new family.
+ * @param {number} familyId
+ * @param {string} submission
+ * @return {number} Actual family number assigned
+ */
+Db.prototype.addNewFamily = function(familyId, submission) {
+  var data;
+  try {
+    data = JSON.parse(submission);
+  } catch(e) {
+    DebugLog('WARNING: error parsing data: ' + submission);
+    return -1;
+  }
+  
+  var nextId = this.nextAvailableFamilyNumber();
+  if (nextId != familyId) {
+    DebugLog('WARNING: race condition detected: ' + familyId + '->' + nextId);
+    familyId = nextId;
+  }
+  
+  var rawData = new RawData(data);
+  if (rawData.errMsg.length) {  // This should not happen, unless network errored.
+    DebugLog('WARNING: error analyzing data: ' + submission);
+    return -1;
+  }
+  
+  rawData.setFamilyNumber(familyId);
+  var entry = rawData.entry;
+  var familyTable = this.tables_['Family'];
+  FamilyItem.serialize(familyTable, entry.family);
+  
+  var parentTable = this.tables_['Parent'];
+  for (var j = 0; j < entry.parents.length; ++j) {
+    ParentItem.serialize(parentTable, entry.parents[j]);
+  }
+  
+  var studentTable = this.tables_['Student'];
+  for (var j = 0; j < entry.students.length; ++j) {
+    StudentItem.serialize(studentTable, entry.students[j]);
+  }
+  
+  if (rawData.entry.ec.length) {
+    registerEC(familyId, rawData.entry.ec);
+  }
+  
+  return familyId;
+};
+
+
+/**
  * Get DB instance.
  * @param {string=} opt_dbName
  * @return {Db}
@@ -323,7 +398,7 @@ Db.prototype.nextAvailableFamilyNumber = function() {
 Db.getInstance = function(opt_dbName) {
   var dbName = opt_dbName || DB_DOCID;
   if (!DBInstances.dbName) {
-    return new Db(dbName, true);
+    DBInstances.dbName = new Db(dbName, dbName == DB_DOCID);
   }
   return DBInstances.dbName;
 }
@@ -345,7 +420,7 @@ function getNextAvailableFamilyNumber() {
 
 /** Construct fast name lookup table */
 function buildNameLookup() {
-  var db = new Db();
+  var db = Db.getInstance();
   var parents = db.getParent().getAll();
   var students = db.getStudent().getAll();
   var tuples = [];
@@ -383,7 +458,7 @@ function buildNameLookup() {
 
 /** Construct mail blast sheet */
 function buildMailBlast() {
-  var db = new Db();
+  var db = Db.getInstance();
   var outputFile = lookupAndOpenFile('MailBlast' + getSchoolYear().toString());
   var sheet = outputFile.getActiveSheet();
   sheet.clear();
@@ -420,7 +495,7 @@ function buildMailBlast() {
 
 /** Construct ServiceDB template */
 function buildServiceDb() {
-  var db = new Db();
+  var db = Db.getInstance();
   var outputFile = lookupAndOpenFile('ServiceDB' + getSchoolYear().toString());
   var sheet = outputFile.getActiveSheet();
   sheet.clear();
@@ -449,4 +524,48 @@ function buildServiceDb() {
   for (var j in data) {
     sheet.appendRow(data[j]);
   }
+}
+
+
+/**
+ * @param {number} familyNumber
+ * @param {string=} opt_db
+ * @return {Object} [{name: string, birth_date: Date}]
+ */
+function getStudentInfo(familyNumber, opt_db) {
+  var db = Db.getInstance(opt_db);
+  return db.getStudent().get(familyNumber, false);
+}
+
+function testGetStudentInfo() {
+  var info = getStudentInfo(8765, 'RegDBTest2017');
+  assertEquals(2, info.length);
+//  Logger.log(info[0]);
+//  Logger.log(info[1]);
+}
+
+
+/**
+ * @param {number} familyNumber
+ * @param {string=} opt_db
+ */
+function setStudentAsActive(familyNumber, opt_db) {
+  var db = Db.getInstance(opt_db);
+  db.setStudentAsActive(familyNumber);
+}
+
+// Side effect on test DB, need manual edit to set it back
+function testSetStudentAsActive() {
+  setStudentAsActive(8765, 'RegDBTest2017');
+}
+
+function addNewFamily(familyNumber, submission, opt_db) {
+  var db = Db.getInstance(opt_db);
+  return db.addNewFamily(familyNumber, submission);
+}
+
+// Side effect on RegDBTest2017 and EC2017, need manual edit to set it back
+function testAddFamily() {
+  var submission = JSON.stringify(getTestData());
+  addNewFamily(10000, submission, 'RegDBTest2017');
 }

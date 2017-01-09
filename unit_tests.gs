@@ -5,7 +5,7 @@
  */
 
 function testDataRead() {
-  var db = new Db('RegDBTest2016');
+  var db = Db.getInstance('RegDBTest2017');
   testClass(db.getClass());
   testFamily(db.getFamily());
   testParent(db.getParent());
@@ -29,7 +29,7 @@ function testImport() {
 }
 
 function detectDbError() {
-  var db = new Db();
+  var db = Db.getInstance();
   var warnings = [];
   db.detectError(warnings);
   for (var i = 0; i < warnings.length; ++i) {

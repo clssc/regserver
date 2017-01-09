@@ -268,7 +268,7 @@ function testValidatorState() {
  * @throw {GSError}
  */
 function checkDb() {
-  var db = new Db();
+  var db = Db.getInstance();
   var warnings = [];
   db.detectError(warnings);
   return warnings;
