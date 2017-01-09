@@ -15,10 +15,6 @@ var SERVICE_DEPOSIT = 200;
 
 
 /** @const {number} */
-var TEXTBOOK_CHARGE = 50;
-
-
-/** @const {number} */
 var PROCESS_FEE = 50;
 
 
@@ -86,9 +82,6 @@ WithdrawItem = function() {
   this.serviceFine;
   
   /** @type {number} */
-  this.textbookCharge;
-  
-  /** @type {number} */
   this.processFee;
   
   /** @type {string} */
@@ -143,7 +136,6 @@ Withdraw = function() {
   this.payments_ = {};
   
   // Load payment data
-  Logger.log(PAYMENT_DOCID);
   sheet = SpreadsheetApp.openById(PAYMENT_DOCID).getSheetByName('Sheet1');
   rows = sheet.getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn()).getValues();
   rows.map(function(row) {
@@ -181,7 +173,6 @@ Withdraw.prototype.run = function() {
   }
   
   this.generateReports_();
-  this.sendMail_();
 };
 
 
@@ -218,6 +209,8 @@ Withdraw.prototype.parseResponse_ = function(row) {
   item.checkPayable = row[7];
   item.mailingAddress = row[8];
   
+  var ec = new ECDB();
+  
   while (!badItem) {
     var names = [item.applicantName];
     item.students.forEach(function(student) {
@@ -225,8 +218,7 @@ Withdraw.prototype.parseResponse_ = function(row) {
     });
     var familyNumber = this.db_.lookupFamilyNumber(names);
     if (familyNumber == -1) {
-      Logger.log(names);
-      item.memo += 'Unable to locate family number.';
+      item.memo += 'Unable to locate family number: ' + item.applicantName;
       break;
     }
     if (item.familyNumber != familyNumber) {
@@ -254,9 +246,14 @@ Withdraw.prototype.parseResponse_ = function(row) {
       break;
     }
     item.students = students;
+    var ecStudents = ec.getStudents(familyNumber).map(function(name) {
+      return name.toLowerCase();
+    });
     item.studentsString = students.map(function(stu) {
-      return stu.name + '(' + stu.class + ')';
-    }).join(',');
+      var hasEC = (ecStudents.indexOf(stu.name.toLowerCase()) != -1);
+      var extraToken = hasEC ? ', EC' : '';
+      return stu.name + ' (' + stu.class + extraToken + ')';
+    }).join(', ');
     
     // Static logic    
     item.familyDeposit = (item.familyNumber <= 1148) ? FAMILY_DEPOSIT : 0;
@@ -269,7 +266,6 @@ Withdraw.prototype.parseResponse_ = function(row) {
       item.originalPayment = 'manual';
     }
     
-    item.textbookCharge = TEXTBOOK_CHARGE;
     item.processFee = item.students.length * PROCESS_FEE;
     var servicePoints = this.serviceDb_.lookup(familyNumber);
     item.serviceFine = SERVICE_FINE * (20 - servicePoints);
@@ -313,21 +309,42 @@ Withdraw.prototype.prepareDoc_ = function(item) {
     this.scanElement_(body, item);
     appendToDoc(body, doc);
     doc.saveAndClose();
+    return item.familyNumber;
   }
-  return [doc.getId(), doc.getUrl()];
+  return 0;
 };
 
 
 /** @private */
 Withdraw.prototype.generateReports_ = function() {
+  var changedFamily = [];
   this.items_.forEach(function(item) {
-    this.prepareDoc_(item);
+    var familyNumber = this.prepareDoc_(item);
+    if (familyNumber != 0) {
+      changedFamily.push(familyNumber);
+    }
   }.bind(this));
+  
+  if (changedFamily.length) {
+    this.sendMail_(changedFamily);
+  }
 };
 
 
 /** @private */
-Withdraw.prototype.sendMail_ = function() {
+Withdraw.prototype.sendMail_ = function(changedFamily) {
+  var body = changedFamily.map(function(familyNumber) {
+    return familyNumber.toString();
+  }).join('<br/>');
+  this.emails_.forEach(function(email) {
+    MailApp.sendEmail({
+     to: email,
+     subject: 'CLSSC Reg System Notification: Withdraw',
+     htmlBody: 'AUTO-GENERATED E-MAIL. DO NOT REPLY.<br/><br/>' +
+               'New withdraw forms:<br/>' +
+               changedFamily +
+               '<br/>Please go to Withdraw folder to review.'});
+  });      
 };
 
 

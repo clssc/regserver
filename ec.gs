@@ -165,6 +165,18 @@ ECEnrollment_.prototype.add = function(rowContents) {
 
 
 /**
+ * @param {number} familyNumber
+ * @return {Array<string>} Students enrolled in EC
+ */
+ECEnrollment_.prototype.get = function(familyNumber) {
+  if (this.map_[familyNumber]) {
+    return this.map_[familyNumber];
+  }
+  return [];
+};
+
+
+/**
  * The EC sheet.
  * @param {string=} opt_dbName Spreadsheet name to open as database.
  * @param {string=} opt_regDbName
@@ -214,6 +226,12 @@ ECDB.prototype.updateStats_ = function() {
 /** @return {!Array.<ECClassItem>} */
 ECDB.prototype.getClasses = function() {
   return this.classes_.data;
+};
+
+
+/** @return {!Array.<string>} */
+ECDB.prototype.getStudents = function(familyNumber) {
+  return this.enrollment_.get(familyNumber);
 };
 
 
