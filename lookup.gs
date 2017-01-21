@@ -1,5 +1,4 @@
-/** @const {string} */
-var NAME_LOOKUP = '12ZOp_uNOha9kA3vRyjk0EbfboxN0_lZONTRw1Os8wNg';
+loadConfig();
 
 
 /**
@@ -52,15 +51,16 @@ FamilyNumberLookup.prototype.lookup = function(name) {
 function testFastFamilyNumberLookup() {
   var t1 = new Date().getTime();
   var lookup = new FamilyNumberLookup();
-  Logger.log(lookup.lookup('Rebecca Hsu'));
-  Logger.log(lookup.lookup('徐振家'));
-  Logger.log(lookup.lookup('Nosuch People'));
+  var LOG_TAG = 'testFastFamilyNumberLookup';
+  doLog(LOG_TAG, lookup.lookup('Rebecca Hsu'));
+  doLog(LOG_TAG, lookup.lookup('徐振家'));
+  doLog(LOG_TAG, lookup.lookup('Nosuch People'));
   var t2 = new Date().getTime();
   var db = Db.getInstance();
-  Logger.log(db.lookupFamilyNumber('Rebecca Hsu'));
-  Logger.log(db.lookupFamilyNumber('徐振家'));
-  Logger.log(db.lookupFamilyNumber('Nosuch People'));
+  doLog(LOG_TAG, db.lookupFamilyNumber('Rebecca Hsu'));
+  doLog(LOG_TAG, db.lookupFamilyNumber('徐振家'));
+  doLog(LOG_TAG, db.lookupFamilyNumber('Nosuch People'));
   var t3 = new Date().getTime();
-  Logger.log(t2 - t1);
-  Logger.log(t3 - t2);
+  doLog(LOG_TAG, t2 - t1);
+  doLog(LOG_TAG, t3 - t2);
 }

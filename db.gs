@@ -3,12 +3,8 @@
  * @author arthurhsu@westsidechineseschool.org (Arthur Hsu)
  */
 
-
-/**
- * REGDB2017
- * @const {string}
- */
-var DB_DOCID = '1dtBHk5sEjJt4RXHFCzArFw6iDqw8M7HifyPDLhoL6xU';
+// Import constants
+loadConfig();
 
 
 /**
@@ -164,10 +160,10 @@ Db.prototype.initialize_ = function(opt_dbName, opt_openById) {
   }
   
   if (DBInstances[dbName]) {
-    DebugLog('WARNING: recreating DB instance for ' + dbName);
+    DebugLog('Db', 'WARNING: recreating DB instance for ' + dbName);
   }
   DBInstances[dbName] = this;
-  DebugLog('opened ' + dbName);
+  doLog('Db', 'opened ' + dbName);
 };
 
 
@@ -204,7 +200,6 @@ Db.prototype.lookupFamilyNumber = function(names) {
     for (var j = 0; j < students.length; ++j) {
       var english_name = students[j].first_name + ' ' + students[j].last_name;
       english_name = english_name.toLowerCase();
-      if (english_name.substring(0, 3) == 'ida') Logger.log(english_name + ' ' + lowerCaseName);
       if (english_name == lowerCaseName || students[j].chinese_name == name) {
         return students[j].family_number;
       }
@@ -224,7 +219,7 @@ function testLookupFamilyNumber(db) {
   assertEquals(8765, db.lookupFamilyNumber(['Lily Lee', '李強']));
   assertEquals(2345, db.lookupFamilyNumber('John Doe'));
   assertEquals(2345, db.lookupFamilyNumber('杜凱琪'));
-  DebugLog('testLookupFamilyNumber: PASSED');
+  doLog('testLookupFamilyNumber', 'PASSED');
 }
 
 
@@ -351,19 +346,19 @@ Db.prototype.addNewFamily = function(familyId, submission) {
   try {
     data = JSON.parse(submission);
   } catch(e) {
-    DebugLog('WARNING: error parsing data: ' + submission);
+    DebugLog('Db', 'WARNING: error parsing data: ' + submission);
     return -1;
   }
   
   var nextId = this.nextAvailableFamilyNumber();
   if (nextId != familyId) {
-    DebugLog('WARNING: race condition detected: ' + familyId + '->' + nextId);
+    DebugLog('Db', 'WARNING: race condition detected: ' + familyId + '->' + nextId);
     familyId = nextId;
   }
   
   var rawData = new RawData(data);
   if (rawData.errMsg.length) {  // This should not happen, unless network errored.
-    DebugLog('WARNING: error analyzing data: ' + submission);
+    DebugLog('Db', 'WARNING: error analyzing data: ' + submission);
     return -1;
   }
   
@@ -407,14 +402,14 @@ Db.getInstance = function(opt_dbName) {
 /** @param {Db} db Test database to use. */
 function testNextAvailableFamilyNumber(db) {
   assertEquals(10000, db.nextAvailableFamilyNumber());
-  DebugLog('testNextAvailableFamilyNumber: PASSED');
+  doLog('testNextAvailableFamilyNumber', 'PASSED');
 }
 
 
 /** Shorthand of getting next available family number of current db */
 function getNextAvailableFamilyNumber() {
   var db = Db.getInstance();
-  DebugLog(db.nextAvailableFamilyNumber());
+  db.nextAvailableFamilyNumber();
 }
 
 
@@ -540,8 +535,6 @@ function getStudentInfo(familyNumber, opt_db) {
 function testGetStudentInfo() {
   var info = getStudentInfo(8765, 'RegDBTest2017');
   assertEquals(2, info.length);
-//  Logger.log(info[0]);
-//  Logger.log(info[1]);
 }
 
 
@@ -568,4 +561,15 @@ function addNewFamily(familyNumber, submission, opt_db) {
 function testAddFamily() {
   var submission = JSON.stringify(getTestData());
   addNewFamily(10000, submission, 'RegDBTest2017');
+}
+
+function getStudentZipCode() {
+  var db = new Db();
+  var zipCode = {};
+  var fam = db.getFamily();
+  db.getStudent().getAllActive().forEach(function(item) {
+    var zip = fam.get(item.family_number).zip;
+    zipCode[zip] = true;
+  });
+  doLog('getStudentZipCode', Object.keys(zipCode).sort());
 }

@@ -89,7 +89,7 @@ Student.prototype.detectDupe = function(warnings) {
   for (var i = 0; i < this.data_.length - 1; ++i) {
     if (token(this.data_[i]) == token(this.data_[i + 1])) {
       warnings.push('Detected dupe: student: ' + token(this.data_[i]));
-      DebugLog(warnings[warnings.length - 1]);
+      DebugLog('Student', warnings[warnings.length - 1]);
     }
   }
 };
@@ -200,7 +200,7 @@ function testStudent(target) {
   var warnings = [];
   target.detectDupe(warnings);
   assertEquals(1, warnings.length);
-  DebugLog('testStudent: PASSED');
+  doLog('testStudent', 'PASSED');
 }
 
 

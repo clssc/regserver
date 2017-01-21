@@ -3,18 +3,7 @@
  * @author arthurhsu@westsidechineseschool.org (Arthur Hsu)
  */
 
-
-/**
- * TuitionBreakdown2017
- * @const {string}
- */
-var TUITION_BREAKDOWN_DOCID = '1d3Q1VR9aO-ItFSUBvI6a9INdEkkt0FJMMPldDlNeDHg';
-
-
-/**
- * Cut off date. 2017-08-01. This is GMT, so PST daylight time is 7 hours later.
- */
-var CUT_OFF_DATE = new Date(Date.UTC(2017, 7, 1, 7)).getTime();
+loadConfig();
 
 
 /**
@@ -259,7 +248,7 @@ function testGetFamilyNumbers() {
 }
 
 function testRealLookupTuition() {
-  Logger.log(lookupTuition(1020));
+  doLog('testRealLookupTuition', lookupTuition(1020));
 }
 
 function testSetPaid() {

@@ -20,9 +20,9 @@ var GSError = function(message, opt_comment) {
   /** @type {string} */
   this.stack = (new Error()).stack;
   
-  DebugLog(this.description);
-  DebugLog(this.comment);
-  DebugLog(this.stack);
+  DebugLog('assertion', this.description);
+  DebugLog('assertion', this.comment);
+  DebugLog('assertion', this.stack);
 }
 
 /**

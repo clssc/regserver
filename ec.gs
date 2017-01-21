@@ -3,21 +3,7 @@
  * @author arthurhsu@westsidechineseschool.org (Arthur Hsu)
  */
 
-
-/**
- * EC2017
- * @const {string}
- */
-var EC_DOCID = '1LfCjVxymw_OYFLlcwuqNKFJBHAxFUklIRMVSrjXtaTs';
-
-
-/**
- * School start date, used to calculate EC eligibility.
- * 2017-09-09. This is GMT, so PST daylight time is 7 hours later.
- * @const {number}
- */
-var SCHOOL_START_DATE = new Date(Date.UTC(2017, 9, 9, 7)).getTime();
-
+loadConfig();
 
 /**
  * EC class entry.
@@ -349,7 +335,7 @@ function getECClasses() {
 }
 
 function testGetECClasses() {
-  Logger.log(getECClasses());
+  doLog('testGetECClasses', getECClasses());
 }
 
 /**
@@ -365,10 +351,9 @@ function testRegister() {
   assertEquals('OK', message);
   message = ec.register(8766, [{name: 'Lily', code: 'pai'}]);
   assertEquals('FAIL: already registered: 8766 Lily Lee', message);
-  Logger.log('ALL PASSED');
+  doLog('testRegister', 'ALL PASSED');
 }
 
 function testLookupEC() {
-  //Logger.log(lookupEC(1014));
-  Logger.log(lookupEC(311));
+  doLog('testLoookupEC', lookupEC(311));
 }

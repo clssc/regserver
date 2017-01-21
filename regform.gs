@@ -1,51 +1,4 @@
-/**
- * Early bird tuition per student.
- * @const {number}
- */
-var EARLY_BIRD_TUITION = 700;
-
-
-/**
- * Normal tuition per student.
- * @const {number}
- */
-var NORMAL_TUITION = 800;
-
-
-/**
- * Service points deposit per family.
- * @const {number}
- */
-var SERVICE_DEPOSIT = 200;
-
-
-/**
- * Service fine per point.
- * @const {number}
- */
-var SERVICE_FINE = 20;
-
-
-/**
- * Minimal service points requirements.
- * @const {number}
- */
-var MIN_SERVICE_POINTS = 20;
-
-
-/**
- * New Family non-refundable fee.
- * @const {number}
- */
-var NEW_FAMILY_FEE = 100;
-
-
-/**
- * Mail blast message template HTML file.
- * @const {string}
- */
-var MAIL_BLAST_TEMPLATE = 'ReturningStudentInfo2017-en.html';
-
+loadConfig();
 
 /**
  * Mail blast data file.
@@ -115,7 +68,7 @@ RegForm = function(opt_dataFileName) {
  * @private
  */
 RegForm.prototype.initialize_ = function(opt_dataFileName, opt_serviceDbName) {
-  DebugLog('Regform init');
+  doLog('Regform', 'init');
   this.db_ = Db.getInstance(opt_dataFileName);
   this.serviceDb_ = new ServiceDb(opt_serviceDbName);
 };
@@ -199,7 +152,7 @@ RegForm.prototype.getFormData_ = function(familyNumber) {
   var parents = this.db_.getParent().get(familyNumber);
   var students = this.db_.getStudent().get(familyNumber);
   if (students.length > 4) {
-    DebugLog('FIXME: more than 4 students');
+    DebugLog('RegForm', 'FIXME: more than 4 students');
   }
   var data = {};
   data['fam_no'] = familyNumber;
@@ -308,7 +261,7 @@ RegForm.prototype.prepareDoc_ = function(fileName, data, opt_force) {
     var doc = lookupAndOpenDoc(fileName);
     if (doc) {
       // File exists, give up.
-      DebugLog(fileName + ' existed, give up');
+      DebugLog('RegForm', fileName + ' existed, give up');
       return [doc.getId(), doc.getUrl()];
     }
   }
@@ -499,6 +452,7 @@ RegForm.prototype.updateTuitionBreakdown = function() {
 
  
 function analyzeDoc(body) {
+  var LOG_TAG = 'analyzeDoc';
   var dumpElement = function(element, prefix) {
     var type = element.getType();
     if (type == 'TEXT') {
@@ -506,19 +460,19 @@ function analyzeDoc(body) {
       if (text.length > 10) {
         text = text.substring(0, 10);
       }
-      Logger.log(prefix + 'TEXT:' + text);
+      doLog(LOG_TAG, prefix + 'TEXT:' + text);
     } else if (type == 'TABLE') {
-      Logger.log(prefix + 'TABLE:' + element.asTable().getNumRows());
+      doLog(LOG_TAG, prefix + 'TABLE:' + element.asTable().getNumRows());
     } else if (type == 'BODY_SECTION' ||
                type == 'DOCUMENT' ||
                type == 'PARAGRAPH') {
-      Logger.log(prefix + type);
+      doLog(LOG_TAG, prefix + type);
       // Supported ContainerElement
       for (var i = 0; i < element.getNumChildren(); ++i) {
         dumpElement(element.getChild(i), prefix + '  ');
       }
     } else {
-      Logger.log(prefix + type);
+      doLog(LOG_TAG, prefix + type);
     }
   };
   dumpElement(body, '');

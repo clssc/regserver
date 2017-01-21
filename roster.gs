@@ -69,7 +69,7 @@ function getStats() {
     activeFamily[student.family_number] = true;
   }
   
-  Logger.log(activeStudentCount.toString() + ' ' + Object.keys(activeFamily).length.toString());
+  doLog('getStats', activeStudentCount.toString() + ' ' + Object.keys(activeFamily).length.toString());
 }
 
 
@@ -304,7 +304,7 @@ function scanTable(table, data) {
   for (var i = 0; i < data['rows'].length; ++i) {
     var row = table.appendTableRow();
     for (var j = 0; j < data['rows'][i].length; ++j) {
-      Logger.log(data['rows'][i][j]);
+//      doLog('scanTable', data['rows'][i][j]);
       var cell = row.appendTableCell(data['rows'][i][j]);
       cell.setAttributes(cellTemplate);
       var paragraph = cell.getChild(0).asParagraph();
@@ -423,7 +423,6 @@ function generateClassRosterData() {
  */
 function generateClassRoster(data) {
   var fileName = CLASS_ROSTER_NAME + '-' + data['class'];
-  Logger.log(data);
   
   // Google Apps Script has a bug that it can't clear contents inside a doc.
   // See https://code.google.com/p/google-apps-script-issues/issues/detail?id=1489

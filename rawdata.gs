@@ -273,5 +273,5 @@ function getTestData() {
 }
 
 function testImportParsing() {
-  Logger.log(importWebData(getTestData()));
+  doLog('testImportParsing', importWebData(getTestData()));
 }

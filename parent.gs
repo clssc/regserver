@@ -44,7 +44,7 @@ Parent.prototype.detectDupe = function(warnings) {
   for (var i = 0; i < this.data_.length - 1; ++i) {
     if (token(this.data_[i]) == token(this.data_[i + 1])) {
       warnings.push('Detected dupe: parent: ' + token(this.data_[i]));
-      DebugLog(warnings[warnings.length - 1]);
+      DebugLog('Parent', warnings[warnings.length - 1]);
     }
   }
 };
@@ -162,7 +162,7 @@ function testParent(target) {
   var warnings = [];
   target.detectDupe(warnings);
   assertEquals(1, warnings.length);
-  DebugLog('testParent: PASSED');
+  doLog('testParent', 'PASSED');
 }
 
 

@@ -176,7 +176,7 @@ function testValidatorPhoneNumber() {
                Validator.phoneNumber('+886-2-2571-4438'));
   assertEquals('',
                Validator.phoneNumber('886225714438'));
-  DebugLog('testValidatorPhoneNumber: PASSED');
+  doLog('testValidatorPhoneNumber', 'PASSED');
 }
 
 
@@ -204,7 +204,7 @@ function testValidatorEmail() {
   assertEquals('', Validator.email('what@ever@gmail.com'));
   assertEquals('', Validator.email('whatever'));
   assertEquals('', Validator.email('whatever@'));
-  DebugLog('testValidatorEmail: PASSED');
+  doLog('testValidatorEmail', 'PASSED');
 }
 
 
@@ -229,7 +229,7 @@ function testValidatorZip() {
   assertEquals('', Validator.zip('what?'));
   assertEquals('', Validator.zip('012ab'));
   assertEquals('', Validator.zip('90034-56789'));
-  DebugLog('testValidatorZip: PASSED');
+  doLog('testValidatorZip', 'PASSED');
 }
 
 
@@ -258,7 +258,7 @@ function testValidatorState() {
   assertEquals('CA', Validator.state('Ca'));
   assertEquals('', Validator.state('tw'));
   assertEquals('', Validator.state('Calibania'));
-  DebugLog('testValidatorState: PASSED');
+  doLog('testValidatorState', 'PASSED');
 }
 
 

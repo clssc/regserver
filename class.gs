@@ -61,7 +61,7 @@ Class.prototype.detectDupe = function(warnings) {
   for (var i = 0; i < this.data_.length - 1; ++i) {
     if (this.data_[i].name == this.data_[i + 1].name) {
       warnings.push('Detected dupe: class: ' + this.data_[i].name);
-      DebugLog(warnings[warnings.length - 1]);
+      DebugLog('class', warnings[warnings.length - 1]);
     }
   }
 };
@@ -133,5 +133,5 @@ function testClass(target) {
   var warnings = [];
   target.detectDupe(warnings);
   assertEquals(1, warnings.length);
-  DebugLog('testClass: PASSED');
+  doLog('testClass', 'PASSED');
 }

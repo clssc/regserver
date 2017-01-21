@@ -122,7 +122,7 @@ Family.prototype.detectDupe = function(warnings) {
   for (var i = 0; i < this.data_.length - 1; ++i) {
     if (this.data_[i].family_number == this.data_[i + 1].family_number) {
       warnings.push('Detected dupe: family: ' + this.data_[i].family_number);
-      DebugLog(warnings[warnings.length - 1]);
+      DebugLog('Family', warnings[warnings.length - 1]);
     }
   }
   
@@ -135,7 +135,7 @@ Family.prototype.detectDupe = function(warnings) {
     if (this.data_[i].home_phone == this.data_[i + 1].home_phone &&
         this.data_[i].home_phone.trim().length) {
       warnings.push('Detected dupe: family home phone: ' + this.data_[i].home_phone);
-      DebugLog(warnings[warnings.length - 1]);
+      DebugLog('Family', warnings[warnings.length - 1]);
     }
   }
 };
@@ -172,7 +172,7 @@ function testFamily(target) {
   var warnings = [];
   target.detectDupe(warnings);
   assertEquals(2, warnings.length);
-  DebugLog('testFamily: PASSED');
+  doLog('testFamily', 'PASSED');
 }
 
 /**

@@ -17,18 +17,8 @@ var PUBLIC_FOLDER = 'Reports';
 var PADDINGS = '                                                            ';
 
 
-/**
- * Returns current school year, if not specified.
- * The cut-off date is June 20 of every year.
- * @return {number}
- */
-function getSchoolYear() {
-  return 2017;
-}
-
-
 function logSchoolYear() {
-  DebugLog('School year is: ' + getSchoolYear());
+  DebugLog('base', 'School year is: ' + getSchoolYear());
 }
 
 
@@ -50,16 +40,26 @@ function lookupAndOpenFile(fileName) {
 
 
 /**
- * Output debug message to Log and Debug Log file.
+ * Output log message.
+ * @param {string} tag
  * @param {string} message
  */
-function DebugLog(message) {
-  Logger.log(message);
+function doLog(tag, message) {
+  Logger.log("%s: %s", tag, message);
+}
+
+
+/**
+ * Output debug message to Log and Debug Log file.
+ * @param {string} tag
+ * @param {string} message
+ */
+function DebugLog(tag, message) {
+  doLog(tag, message);
   var file = lookupAndOpenFile('DebugLog');
   var sheet = file.getActiveSheet();
-  var lastRow = sheet.getLastRow();
-  var cell = sheet.getRange('a1').offset(lastRow, 0);
-  cell.setValue(message);
+  var timestamp = Utilities.formatDate(new Date(), 'PST', 'MM-dd-yyyy HH:mm:ss z').toString();
+  sheet.appendRow([timestamp, tag, message]);
 }
 
 
@@ -210,7 +210,7 @@ function shareFile(doc, opt_folder, opt_shareToDomain) {
       return;
     }
   }
-  Logger.log('WARNING: unable to share file ' + doc.getName());
+  doLog('shareFile', 'WARNING: unable to share file ' + doc.getName());
 }
 
 
@@ -347,6 +347,6 @@ function dumpFileMetadata() {
   while (it.hasNext()) {
     var file = it.next();
     var message = file.getName() + ' ' + file.getMimeType() + ' ' + file.getUrl();
-    Logger.log(message);
+    doLog('dumpFileMetadata', message);
   }
 }

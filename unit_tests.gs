@@ -33,6 +33,6 @@ function detectDbError() {
   var warnings = [];
   db.detectError(warnings);
   for (var i = 0; i < warnings.length; ++i) {
-    DebugLog(warnings[i]);
+    DebugLog('detectDbError', warnings[i]);
   }
 }

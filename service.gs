@@ -3,19 +3,15 @@
  * @author arthurhsu@westsidechineseschool.org (Arthur Hsu)
  */
 
+loadConfig();
+
+
 /**
  * File name of the database.
  * @type {string}
  * @const
  */
 var SERVICE_DB_NAME = 'ServiceDB';
-
-
-/**
- * ServiceDB2016 (previous year)
- * @const {string}
- */
-var SERVICEDB_DOCID = '19UMfbAKD-t6iyF22FDeMO2Ta2pIldbVFTeBhBG9jeNE';
 
 
 /**
@@ -53,12 +49,12 @@ ServiceDb.prototype.initialize_ = function(opt_dbName) {
     }
     
     if (this.map_[familyNumber] && this.map_[familyNumber] != points) {
-      DebugLog('WARNING: inconsistent service point, family# ' + familyNumber + ' ' +
+      DebugLog('ServiceDb', 'WARNING: inconsistent service point, family# ' + familyNumber + ' ' +
                this.map_[familyNumber] + ' ' + points);
     }
     this.map_[familyNumber] = points;
   }
-  DebugLog('opened ' + dbName);
+  doLog('ServiceDb', 'opened ' + dbName);
 };
 
 
@@ -83,12 +79,13 @@ function testServiceDb() {
 
 function testServiceRevision() {
   var revisions = Drive.Revisions.list(SERVICEDB_DOCID);
+  var LOG_TAG = 'testServiceRevision';
   if (revisions.items && revisions.items.length > 0) {
     for (var i = 0; i < revisions.items.length; i++) {
       var revision = revisions.items[i];
-      Logger.log(revision);
+      doLog(LOG_TAG, revision);
     }
   } else {
-    Logger.log('No revisions found.');
+    doLog(LOG_TAG, 'No revisions found.');
   }
 }
