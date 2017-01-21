@@ -1,18 +1,4 @@
 /**
- * Output debug message to Log and Debug Log file.
- * @param {string} message
- */
-function DebugLog(message) {
-  Logger.log(message);
-  var file = lookupAndOpenFile('DebugLog');
-  var sheet = file.getActiveSheet();
-  var lastRow = sheet.getLastRow();
-  var cell = sheet.getRange('a1').offset(lastRow, 0);
-  cell.setValue(message);
-}
-
-
-/**
  * Parses evil data from the client.
  * @param {string} message
  * @return {Object}
@@ -22,7 +8,7 @@ function parseMessage(message) {
   try {
     parsedObject = JSON.parse(message);
   } catch(e) {
-    DebugLog('Failed to parse ' + message);
+    Reg.DebugLog('RegWebData', 'Failed to parse ' + message);
   } finally {
     return parsedObject;
   }
