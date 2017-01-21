@@ -7,20 +7,6 @@ var TEST_MAIL_ACCOUNT = 'nobody@nobody';
 
 
 /**
- * Output debug message to Log and Debug Log file.
- * @param {string} message
- */
-function DebugLog(message) {
-  Logger.log(message);
-  var file = SpreadsheetApp.openById('0AgvYC6nj697MdDhHZU4xaHFLSlVaSTlOb1Zqb1FURGc');
-  var sheet = file.getActiveSheet();
-  var lastRow = sheet.getLastRow();
-  var cell = sheet.getRange('a1').offset(lastRow, 0);
-  cell.setValue(message);
-}
-
-
-/**
  * @param {string} email
  * @param {string} familyNumber
  * @param {string} amount
@@ -83,7 +69,7 @@ function writeData(data) {
           ec = JSON.parse(data.ec);
           Reg.registerEC(familyNumber, ec);
         } catch(e) {
-          DebugLog('Invalid ec data:' + data.ec);
+          Reg.DebugLog('PaymentWeb', 'Invalid ec data:' + data.ec);
         }
       }
     }
