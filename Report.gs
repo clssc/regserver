@@ -81,3 +81,10 @@ function genRegFormsByClass(className) {
   }
 }
 
+function genWithdrawReport() {
+  try {
+    Reg.generateWithdrawReport();
+  } catch (e) {
+    return e;
+  }
+}

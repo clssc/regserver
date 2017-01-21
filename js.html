@@ -30,6 +30,11 @@
       $('#error').dialog('close');
       $('#progress').dialog('open');
     }
+    
+    $('#withdraw').click(function() {
+      commonStart();
+      google.script.run.withSuccessHandler(defaultHandler).genWithdrawReport();
+    });
         
     $('#fullRoster').click(function() {
       commonStart();
