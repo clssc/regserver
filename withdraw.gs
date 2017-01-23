@@ -127,7 +127,7 @@ Withdraw = function() {
   this.items_ = [];
   
   /** @private {ServiceDb} */
-  this.serviceDb_ = new ServiceDb();
+  this.serviceDb_ = new ServiceDb('ServiceDB' + getSchoolYear().toString());
   
   /** @private {Body} */
   this.template_ = readTemplate(WITHDRAW_TEMPLATE);
