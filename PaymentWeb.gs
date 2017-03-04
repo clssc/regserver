@@ -23,7 +23,7 @@ function mailConfirmation(email, familyNumber, amount, paymentId) {
       
 '<p>Thank you for your registration at the Westside Chinese School ' +
 'for the school year 2017-2018. Your online payment was successful. ' +
-'The school will start on September 10, 2017. We will email pertinent ' +
+'The school will start on September 9, 2017. We will email pertinent ' +
 'information to you approximately a week prior to the beginning of ' +
 'the new school year.  Please visit the school website ' +
 '<a href="www.westsidechineseschool.com">www.westsidechineseschool.com</a>' +
