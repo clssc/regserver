@@ -562,7 +562,8 @@ function mailOne(template, emails, pdfs) {
 function testMailOne() {
   var template = DriveApp.getFilesByName(MAIL_BLAST_TEMPLATE).next().getBlob().getDataAsString();
   var pdf = DriveApp.getFilesByName('BlankRegForm' + getSchoolYear().toString()).next().getAs('application/pdf');
-  mailOne(template, ['arthur@cchsu.com'], [pdf]);
+  var ecPDF = DriveApp.getFilesByName('EC' + getSchoolYear().toString() + '.pdf').next().getAs('application/pdf');
+  mailOne(template, ['arthur@cchsu.com'], [pdf, ecPDF]);
 }
 
 function mailBlast(opt_fileName) {
@@ -573,6 +574,7 @@ function mailBlast(opt_fileName) {
   var range = sheet.getRange(2, 1, sheet.getLastRow(), sheet.getLastColumn());
   var rows = range.getValues();
   var count = 0;
+  var ecPDF = DriveApp.getFilesByName('EC' + getSchoolYear().toString() + '.pdf').next().getAs('application/pdf');
   
   // Sent at most 20 emails at a time
   for (var i = 0; i < rows.length && count < 20; ++i) {
@@ -590,7 +592,7 @@ function mailBlast(opt_fileName) {
     }
     var pdf = DriveApp.getFileById(docId).getAs('application/pdf');
     // Comment out, uncomment only when you need to send out the email.
-    mailOne(template, emails, [pdf]);
+    mailOne(template, emails, [pdf, ecPDF]);
     count++;
     rows[i][4] = 'Y';
   }
