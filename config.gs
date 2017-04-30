@@ -19,7 +19,6 @@ function getSchoolYear() {
   return 2017;
 }
 
-var NAME_LOOKUP = '12ZOp_uNOha9kA3vRyjk0EbfboxN0_lZONTRw1Os8wNg';
 var DB_DOCID = '1dtBHk5sEjJt4RXHFCzArFw6iDqw8M7HifyPDLhoL6xU';
 
 // ServiceDB2016 (previous year)
