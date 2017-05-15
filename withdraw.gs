@@ -7,7 +7,7 @@ loadConfig();
 
 
 /** @const {number} */
-var FAMILY_DEPOSIT = 200;
+var FAMILY_DEPOSIT = 100;
 
 
 /** @const {number} */

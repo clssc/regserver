@@ -323,6 +323,9 @@ Db.prototype.setStudentAsActive = function(familyId) {
     if (rows[i][0] == familyId) {
       var cellRange = 'A' + (i + 2).toString() + ':M' + (i + 2).toString();
       var target = sheet.getRange(cellRange.toString())
+      if (target.getCell(1, 12).getValue().trim() == 'N') {  // Prev Active is false
+        continue;
+      }
       target.getCell(1, 11).setValue('Y');  // Active
       var memo = target.getCell(1, 13).getValue();
       if (memo && memo.length) {
