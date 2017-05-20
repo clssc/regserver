@@ -227,24 +227,15 @@ Withdraw.prototype.parseResponse_ = function(row) {
     }
     
     // Data validation
-    var email = Validator.email(item.applicantEmail);
-    if (!email.length) {
-      item.memo += 'Bad applicant email';
-      break;
-    }
-    var phone = Validator.phoneNumber(item.applicantPhone);
-    if (!phone.length) {
-      item.memo += 'Bad applicant phone number';
-      break;
-    }
-    item.applicantPhone = phone;
-    var students = this.db_.getStudent().get(familyNumber, true).map(function(stu) {
-      return {name: stu.first_name + ' ' + stu.last_name, class: stu.currClass};
+    var students = this.db_.getStudent().get(familyNumber, false).map(function(stu) {
+      var classString = stu.currClass || '';
+      if (classString.length == 0) {
+        classString = stu.prev_class || '';
+        classString = (classString.length == 0) ? 'no data' : classString + ' prev year';
+      }
+      return {name: stu.first_name + ' ' + stu.last_name, class: classString};
     });
-    if (students.length == 0) {
-      item.memo += 'All students are inactive';
-      break;
-    }
+    
     item.students = students;
     var ecStudents = ec.getStudents(familyNumber).map(function(name) {
       return name.toLowerCase();
@@ -275,6 +266,7 @@ Withdraw.prototype.parseResponse_ = function(row) {
   }
   
   this.badResponses_.push(JSON.stringify(item));
+  Logger.log(item.familyNumber + ':' + item.memo);
 };
 
 /**
@@ -326,7 +318,8 @@ Withdraw.prototype.generateReports_ = function() {
   }.bind(this));
   
   if (changedFamily.length) {
-    this.sendMail_(changedFamily);
+    Logger.log(changedFamily);
+    //this.sendMail_(changedFamily);
   }
 };
 
