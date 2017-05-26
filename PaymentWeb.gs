@@ -58,18 +58,22 @@ function writeData(data) {
     var amount = data['currency'].toUpperCase() + '$' + (parseInt(data['amount'], 10) / 100).toString();
     var regData = data.reg_data || null;
     var actualFamilyNumber = familyNumber;
+    var ec = null;
     
     if (regData != null) {
       actualFamilyNumber = Reg.addNewFamily(familyNumber, regData);
     } else {
       Reg.setStudentAsActive(familyNumber);    
-      var ec = null;
       if (data.ec) {
         try {
           ec = JSON.parse(data.ec);
-          Reg.registerEC(familyNumber, ec);
+          var res = Reg.registerEC(familyNumber, ec);
+          if (res != 'OK') {
+            ec = null;
+          }
         } catch(e) {
           Reg.DebugLog('PaymentWeb', 'Invalid ec data:' + data.ec);
+          ec = null;
         }
       }
     }
